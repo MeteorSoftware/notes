@@ -23,10 +23,38 @@ documents = [Document("hi"),Document("hi"),Document("hi"),Document("hi"),Documen
 
 @app.route("/document/new")
 def document_new():
-    documents.append(Document("hi"))
-    response_data = {"id":str()}
-    return "a"
+    doc = Document("This one is new")
+    documents.append(doc)
+    response_data = {"id":str(doc.id), "status":"SUCCESS_DOCUMENT_CREATED"}
+    return make_response(jsonify(response_data), 200)
+
+@app.route("/document/read/<int:id>")
+def document_id(id):
+    if id > (len(documents)-1):
+        response_data = {"status":"ERROR_ID_OUT_OF_BOUNDS"}
+        return make_response(jsonify(response_data), 400)
     
+    for document in documents:
+        if document.id == id:
+            response_data = {"content":str(document.content), "status":"SUCCESS_CONTENT_ACCESSED"}
+            return make_response(jsonify(response_data), 200)
+
+    response_data = {"status":"ERROR_DOCUMENT_NOT_FOUND_BY_ID"}
+    return make_response(jsonify(response_data), 400)
+
+@app.route("/document/write/<int:id>")
+def document_id(id):
+    if id > (len(documents)-1):
+        response_data = {"status":"ERROR_ID_OUT_OF_BOUNDS"}
+        return make_response(jsonify(response_data), 400)
+    
+    for document in documents:
+        if document.id == id:
+            response_data = {"content":str(document.content), "status":"SUCCESS_CONTENT_ACCESSED"}
+            return make_response(jsonify(response_data), 200)
+
+    response_data = {"status":"ERROR_DOCUMENT_NOT_FOUND_BY_ID"}
+    return make_response(jsonify(response_data), 400)
 
 
 app.run(port=80, debug=True)
