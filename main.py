@@ -1,24 +1,52 @@
 from flask import Flask,jsonify,make_response,request
+from flask_sqlalchemy import SQLAlchemy
+import utils
 
 app = Flask(__name__)
+app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:1234@localhost/postgres"
+db = SQLAlchemy(app)
 
-class Document:
-    count = 0
-    def __init__(self, content=""):
-        self.id = Document.count
-        self.content = content
-        self.addCount()
-        
-    def change(self, new_content):
-        self.content = new_content
+
+
+class Documents(db.Model):
+    id=db.Column(db.Integer, primary_key=True)
+    title=db.Column(db.String(255))
+    body=db.Column(db.Text)
     
-    @staticmethod
-    def addCount():
-        Document.count += 1
-    
+@app.route("/documents/get/<int:id>")
+def get_documents(id):
+    doc = db.get_or_404(Documents, id)
+    print(doc.id)
+    return utils.success(jsonify(doc.id, doc.title,doc.body))
+
+@app.route("/documents/create")
+def create_document():
+    doc = Documents(title="New document", body="Hello there")
+    db.session.add(doc)
+    db.session.commit()
+    return utils.success(jsonify(doc.id))
+
+@app.route("/documents/write/<int:id>", methods=["POST"])
+def modify_document(id):
+    if request.is_json:
+        data = request.get_json()
+        try:
+            title = data.get("title")
+            body = data.get("body")
+        except:
+            return utils.fail400({"error":"json is missing required fields"})
+        doc = db.get_or_404(Documents, id)
+        doc.title = title
+        doc.body = body
+        db.session.commit()
+        return utils.success(jsonify(doc.id))
+    return utils.fail400({"error":"request is not json"})
+
+
+
+"""
+
 documents = [Document("hi"),Document("hi"),Document("hi"),Document("hi"),Document("hi"),Document("hi"),Document("hi")]
-
-
 
 
 @app.route("/document/new")
@@ -66,6 +94,8 @@ def document_write_id(id):
     else:
         response_data = {"status":"ERROR_JSON_DATA_MISSING"}
         return make_response(jsonify(response_data), 400)
+
+"""        
 
 app.run(port=80, debug=True)
 
